@@ -4,9 +4,10 @@ from .tank import Direction
 import random
 
 class Simple(Tank):
-    def __repr__(self):
-        """ OPTIONAL: Override name of your Tank! """
-        return "S"
+
+    # OPTIONAL: If you want a custom name
+    def __init__(self, name="SimpleTank"):
+        Tank.__init__(self, name=name)
 
     def setup(self):
         """ This stuff runs once """
@@ -15,15 +16,15 @@ class Simple(Tank):
 
     def run(self):
         """ This happens every tick that you are not -cooling down- """
-        print("Results from last tick: {}".format(self.results))
+        #print("Results from last tick: {}".format(self.results))
 
         if self.facing is None:
             self.Face(Direction.EAST)
             self.facing = Direction.EAST
-        elif "type" in self.results and self.results["type"] == "detect":
-            for f in self.results["found"]:
-                if f[0] > 0 and f[1] == 0:
-                    self.Shoot()
+        # elif "type" in self.results and self.results["type"] == "detect":
+        #     for f in self.results["found"]:
+        #         if f[0] > 0 and f[1] == 0:
+        #             self.Shoot()
         elif "type" in self.results and self.results["type"] != "move":
             self.Move(random.choice(self.dirs))
         else:

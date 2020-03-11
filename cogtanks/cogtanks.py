@@ -62,6 +62,7 @@ class CTArena():
 
     def print_map(self):
         """ Print the map in a way that makes sense """
+        return
         m = [[[] for x in range(self.width)] for y in range(self.height)]
 
         for entity in self.entities:
@@ -83,11 +84,12 @@ class CTArena():
 @brief CTBattle is the cogtank battle simulation. It requires CTArean and Tank objects.
 """
 class CTBattle():
-    def __init__(self, width=15, height=10, max_ticks=1000, ticks_per_second=3):
+    def __init__(self, width=10, height=10, max_ticks=1000, ticks_per_second=3):
         self.curtick = 0
         self.ticks_per_second = ticks_per_second
         self.running = False
         self.max_ticks = max_ticks
+        self.log = { "ticks" : [], "gameinfo" : {}}
 
         # Load all tanks
         tanks = self.load_all_tanks()
@@ -95,37 +97,47 @@ class CTBattle():
         # Create an arena
         self.arena = CTArena(width, height, tanks)
 
+    def writelog(self):
+        """ Write output log """
+        with open("tickdata.json", "w") as fp:
+            fp.write(json.dumps(self.log, cls=EnumEncoder))
+
     def start(self):
         """ Start a simulation """
         self.running = True
 
         # Store JSON game data
-        self.gameinfo = {"starting_tank_count" : len(self.arena.entities), "starting_tanks" : map(str, self.arena.entities), "ticks_per_second" : self.ticks_per_second, "max_ticks" : self.max_ticks, "width" : self.arena.width, "height" : self.arena.height}
+        self.gameinfo = {"starting_tank_count" : len(self.arena.entities), "starting_tanks" : list(map(str, self.arena.entities)), "ticks_per_second" : self.ticks_per_second, "max_ticks" : self.max_ticks, "width" : self.arena.width, "height" : self.arena.height}
     
+        print("Starting simulation...")
+        print(self.gameinfo)
+
         for tank in self.arena.entities:
             tank.setup()
 
         while self.running:
             self.tick()
             time.sleep(1 / self.ticks_per_second)
+        else:
+            self.log["gameinfo"] = self.gameinfo
+            self.writelog()
 
     def tick(self):
         """ This method is called at a steady interval and moves the game forward. """
         self.curtick += 1
-        self.loginfo = {"tick" : self.curtick}
-        self.loginfo["tanks"] = {}
-        self.loginfo["deaths"] = []
+        ticklog = {"tick" : self.curtick}
+        ticklog["tanks"] = {}
+        ticklog["deaths"] = []
 
-        print("Running tick: {}".format(self.curtick))
+        logging.info("Running tick: {}".format(self.curtick))
 
         # First pass: Gather intents and clea results from last tick
         for tank in self.arena.entities:
-            self.loginfo["tanks"][str(tank)] = {}
-            self.loginfo["tanks"][str(tank)]["cooldown"] = tank._cooldown
-            self.loginfo["tanks"][str(tank)]["last_result"] = tank.results
-            self.loginfo["tanks"][str(tank)]["hp"] = tank._hp
-            self.loginfo["tanks"][str(tank)]["pos"] = {"x" : tank._pos.x, "y" : tank._pos.y}
-            self.loginfo["gameinfo"] = self.gameinfo
+            ticklog["tanks"][str(tank)] = {}
+            ticklog["tanks"][str(tank)]["cooldown"] = tank._cooldown
+            ticklog["tanks"][str(tank)]["last_result"] = tank.results
+            ticklog["tanks"][str(tank)]["hp"] = tank._hp
+            ticklog["tanks"][str(tank)]["pos"] = {"x" : tank._pos.x, "y" : tank._pos.y}
             if tank._cooldown > 0:
                 tank._cooldown -= 1
             else:
@@ -133,7 +145,7 @@ class CTBattle():
                 tank.run()
                 tank.results = {}
             
-            self.loginfo["tanks"][str(tank)]["intent"] = tank._intent
+            ticklog["tanks"][str(tank)]["intent"] = tank._intent
 
         # Second pass: Shoot and Instant actions
         for tank in self.arena.entities:
@@ -158,9 +170,9 @@ class CTBattle():
             if tank._intent is not None:
                 tank._cooldown += tank._intent["cooldown"]
                 tank._intent = None
-                if tank._hp <= 0:
-                    print("{} was killed!".format(tank.__class__.__name__))
-                    self.loginfo["deaths"].append(str(tank))
+            if tank._hp <= 0:
+                logging.info("{} was killed!".format(str(tank)))
+                ticklog["deaths"].append(str(tank))
 
         # Get rid of dead tanks
         self.arena.entities = [e for e in self.arena.entities if e._hp > 0]
@@ -169,21 +181,23 @@ class CTBattle():
         self.arena.print_map()
 
         # Log tick info
-        logging.info(json.dumps(self.loginfo, cls=EnumEncoder))
+        self.log["ticks"].append(ticklog)
 
         # Termination conditions
         if len(self.arena.entities) == 1:
-            print("{} WON!".format(self.arena.entities[0].__class__.__name__))
-            print("{} WON!".format(self.arena.entities[0].__class__.__name__))
+            logging.info("{} WON!".format(str(self.arena.entities[0])))
+            print("{} WON!".format(str(self.arena.entities[0])))
             self.running = False
             return
         elif len(self.arena.entities) == 0:
-            print("NOBODY WON!")
+            logging.info("NOBODY WON!")
             print("NOBODY WON!")
             self.running = False
             return
         elif self.curtick >= self.max_ticks:
             self.running = False
+            logging.info("MAX TICK REACHED - NOBODY WON!")
+            print("MAX TICK REACHED - NOBODY WON!")
             return
 
         # Making it here means we will probably run another tick
@@ -202,7 +216,7 @@ class CTBattle():
                 tanks.append(tank)
         return tanks
 
-    def add_tank_by_name(self, name):
+    def add_tank_by_name(self, name, rename=None):
         """ Add a specified tank by name """
         for filename in os.listdir("tanks"):
             # For each tank_*.py in tanks/ directory, load module and create a new tank object.
@@ -210,11 +224,11 @@ class CTBattle():
                 if name == filename.strip(".py").strip("tank_"):
                     tankmodule = __import__("tanks.{}".format(filename.strip(".py")), fromlist=[name])
                     tankclass = getattr(tankmodule, name.capitalize())
-                    tank = tankclass()
+                    tank = tankclass(name=rename)
                     self.arena.add_tank_at_random_position(tank)
 
     def _shoot(self, tank):
-        print("{0} performed: {1}".format(tank.__class__.__name__, "shoot"))
+        logging.info("{0} performed: {1}".format(str(tank), "shoot"))
         
         hit = False
         if tank._facing == Direction.NORTH:
@@ -251,7 +265,7 @@ class CTBattle():
         return { "status" : "OK", "hit" : hit, "type" : "shoot" }
 
     def _move(self, tank, dir):
-        print("{0} performed: {1}".format(tank.__class__.__name__, "move"))
+        logging.info("{0} performed: {1}".format(str(tank), "move"))
 
         new_position = tank._pos + dir.value
         collisions = 0
@@ -281,12 +295,12 @@ class CTBattle():
             return { "status" : "OK", "type" : "move" }
 
     def _face(self, tank, dir):
-        print("{0} performed: {1}".format(tank.__class__.__name__, "face"))
+        logging.info("{0} performed: {1}".format(str(tank), "face"))
         tank._facing = dir
         return { "status" : "OK", "type" : "face" }
 
     def _detect(self, tank):
-        print("{0} performed: {1}".format(tank.__class__.__name__, "detect"))
+        logging.info("{0} performed: {1}".format(str(tank), "detect"))
         entities = []
         for e in self.arena.entities:
             if e != tank:
@@ -295,8 +309,11 @@ class CTBattle():
 
 
 def main():
-    battle = CTBattle(ticks_per_second=100)
-    #battle.add_tank_by_name("simple")
+    battle = CTBattle(ticks_per_second=100, max_ticks=10000)
+    battle.add_tank_by_name("simple", rename="Bot-1")
+    #battle.add_tank_by_name("simple", rename="Bot-2")
+    #battle.add_tank_by_name("simple", rename="Bot-3")
+    #battle.add_tank_by_name("simple", rename="Bot-4")
     battle.start()
 
 if __name__ == "__main__":

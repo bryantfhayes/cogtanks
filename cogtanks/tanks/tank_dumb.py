@@ -4,9 +4,9 @@ from .tank import Direction
 import random
 
 class Dumb(Tank):
-    def __repr__(self):
-        """ OPTIONAL: Override name of your Tank! """
-        return "D"
+    # OPTIONAL: If you want a custom name
+    def __init__(self, name="DumbTank"):
+        Tank.__init__(self, name=name)
 
     def setup(self):
         """ This stuff runs once """
