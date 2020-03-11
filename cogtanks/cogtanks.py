@@ -296,7 +296,7 @@ class CTBattle():
 
 def main():
     battle = CTBattle(ticks_per_second=100)
-    battle.add_tank_by_name("simple")
+    #battle.add_tank_by_name("simple")
     battle.start()
 
 if __name__ == "__main__":
