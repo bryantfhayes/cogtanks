@@ -84,7 +84,7 @@ class CTArena():
 @brief CTBattle is the cogtank battle simulation. It requires CTArean and Tank objects.
 """
 class CTBattle():
-    def __init__(self, width=10, height=10, max_ticks=1000, ticks_per_second=3):
+    def __init__(self, width=12, height=9, max_ticks=1000, ticks_per_second=3):
         self.curtick = 0
         self.ticks_per_second = ticks_per_second
         self.running = False
@@ -119,6 +119,7 @@ class CTBattle():
             self.tick()
             time.sleep(1 / self.ticks_per_second)
         else:
+            self.gameinfo["total_ticks"] = self.curtick
             self.log["gameinfo"] = self.gameinfo
             self.writelog()
 
@@ -135,8 +136,8 @@ class CTBattle():
         for tank in self.arena.entities:
             ticklog["tanks"][str(tank)] = {}
             ticklog["tanks"][str(tank)]["cooldown"] = tank._cooldown
+            ticklog["tanks"][str(tank)]["facing"] = tank._facing
             ticklog["tanks"][str(tank)]["last_result"] = tank.results
-            ticklog["tanks"][str(tank)]["hp"] = tank._hp
             ticklog["tanks"][str(tank)]["pos"] = {"x" : tank._pos.x, "y" : tank._pos.y}
             if tank._cooldown > 0:
                 tank._cooldown -= 1
@@ -153,6 +154,13 @@ class CTBattle():
                 intenttype = tank._intent["type"]
                 if intenttype == "shoot":
                     tank.results = self._shoot(tank)
+                    if tank.results["target"] is not None:
+                        ticklog["tanks"][tank.results["target"]]["hit"] = True
+        
+        # Pass 2.5 - Log HP
+        for tank in self.arena.entities:
+            # Log hp AFTER shooting occurs since it is instant
+            ticklog["tanks"][str(tank)]["hp"] = tank._hp
 
         # Third pass: Move, Face, Detect
         for tank in self.arena.entities:
@@ -231,10 +239,12 @@ class CTBattle():
         logging.info("{0} performed: {1}".format(str(tank), "shoot"))
         
         hit = False
-        if tank._facing == Direction.NORTH:
+        target = None
+        if tank._facing == Direction.SOUTH:
             for y in range(tank._pos.y + 1, self.arena.height):
                 for e in self.arena.get_entities_for_pos(Vector2D(tank._pos.x, y)):
                     e._hp -= 1
+                    target = str(e)
                     hit = True
                 if hit:
                     break
@@ -242,6 +252,7 @@ class CTBattle():
             for x in range(tank._pos.x + 1, self.arena.width):
                 for e in self.arena.get_entities_for_pos(Vector2D(x, tank._pos.y)):
                     e._hp -= 1
+                    target = str(e)
                     hit = True
                 if hit:
                     break
@@ -249,20 +260,22 @@ class CTBattle():
             for x in range(tank._pos.x - 1, 0, -1):
                 for e in self.arena.get_entities_for_pos(Vector2D(x, tank._pos.y)):
                     e._hp -= 1
+                    target = str(e)
                     hit = True
                 if hit:
                     break
-        elif tank._facing == Direction.SOUTH:
+        elif tank._facing == Direction.NORTH:
             for y in range(tank._pos.y - 1, 0, -1):
                 for e in self.arena.get_entities_for_pos(Vector2D(tank._pos.x, y)):
                     e._hp -= 1
+                    target = str(e)
                     hit = True
                 if hit:
                     break
         else:
             return { "status" : "UNKNOWN DIRECTION", "type" : "shoot" }
 
-        return { "status" : "OK", "hit" : hit, "type" : "shoot" }
+        return { "status" : "OK", "hit" : hit, "type" : "shoot", "target" : target }
 
     def _move(self, tank, dir):
         logging.info("{0} performed: {1}".format(str(tank), "move"))

@@ -30,6 +30,8 @@ class Simple(Tank):
         else:
             self.Shoot()
 
-        if random.randint(0,100) < 46:
+        if random.randint(0,100) < 10:
             self.Detect()
+        elif random.randint(0,100) < 20:
+            self.Face(random.choice(self.dirs))
         

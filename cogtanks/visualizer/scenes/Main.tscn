@@ -1,0 +1,205 @@
+[gd_scene load_steps=22 format=2]
+
+[ext_resource path="res://Main.gd" type="Script" id=1]
+[ext_resource path="res://scenes/Grid.tscn" type="PackedScene" id=2]
+[ext_resource path="res://assets/COGTANKS.png" type="Texture" id=3]
+[ext_resource path="res://assets/VISUALIZER.png" type="Texture" id=4]
+[ext_resource path="res://assets/manaspc.ttf" type="DynamicFontData" id=5]
+[ext_resource path="res://assets/run-all-btn.png" type="Texture" id=6]
+[ext_resource path="res://assets/run-all-btn-pressed.png" type="Texture" id=7]
+[ext_resource path="res://assets/load-btn.png" type="Texture" id=8]
+[ext_resource path="res://assets/load-btn-pressed.png" type="Texture" id=9]
+[ext_resource path="res://assets/open-btn.png" type="Texture" id=10]
+[ext_resource path="res://assets/open-btn-pressed.png" type="Texture" id=11]
+[ext_resource path="res://assets/step-fwd-btn.png" type="Texture" id=12]
+[ext_resource path="res://assets/step-fwd-btn-pressed.png" type="Texture" id=13]
+[ext_resource path="res://assets/step-back-btn.png" type="Texture" id=14]
+[ext_resource path="res://assets/step-back-btn-pressed.png" type="Texture" id=15]
+[ext_resource path="res://assets/ok-btn.png" type="Texture" id=16]
+[ext_resource path="res://assets/ok-btn-pressed.png" type="Texture" id=17]
+
+[sub_resource type="DynamicFont" id=1]
+font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=5]
+size = 12
+font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=2]
+size = 32
+outline_color = Color( 0.580392, 0.172549, 0.172549, 1 )
+font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=4]
+extra_spacing_top = 16
+font_data = ExtResource( 5 )
+
+[node name="Main" type="Node2D"]
+script = ExtResource( 1 )
+
+[node name="bg" type="ColorRect" parent="."]
+margin_left = -0.791746
+margin_top = -0.395874
+margin_right = 1023.21
+margin_bottom = 599.604
+color = Color( 0.352941, 0.352941, 0.352941, 1 )
+
+[node name="tank_area_bg" type="ColorRect" parent="."]
+margin_left = 10.6247
+margin_top = 11.8123
+margin_right = 778.625
+margin_bottom = 588.812
+color = Color( 0.545098, 0.545098, 0.545098, 1 )
+
+[node name="Grid" parent="tank_area_bg" instance=ExtResource( 2 )]
+
+[node name="title" type="TextureRect" parent="."]
+margin_left = 805.641
+margin_top = 22.5659
+margin_right = 1743.64
+margin_bottom = 167.566
+rect_scale = Vector2( 0.2, 0.2 )
+texture = ExtResource( 3 )
+
+[node name="subtitle" type="TextureRect" parent="."]
+margin_left = 854.903
+margin_top = 59.7918
+margin_right = 1353.9
+margin_bottom = 168.792
+rect_scale = Vector2( 0.2, 0.2 )
+texture = ExtResource( 4 )
+
+[node name="data_file_label" type="Label" parent="."]
+margin_left = 819.519
+margin_top = 93.6246
+margin_right = 977.519
+margin_bottom = 109.625
+custom_fonts/font = SubResource( 1 )
+text = "Tick Data File"
+
+[node name="tick_label" type="Label" parent="."]
+margin_left = 820.021
+margin_top = 496.73
+margin_right = 982.021
+margin_bottom = 512.73
+custom_fonts/font = SubResource( 1 )
+text = "0"
+align = 1
+
+[node name="run_all_button" type="TextureButton" parent="."]
+margin_left = 788.222
+margin_top = 523.765
+margin_right = 1648.22
+margin_bottom = 640.765
+rect_scale = Vector2( 0.26, 0.26 )
+texture_normal = ExtResource( 6 )
+texture_pressed = ExtResource( 7 )
+
+[node name="load_button" type="TextureButton" parent="."]
+margin_left = 792.522
+margin_top = 142.208
+margin_right = 1424.53
+margin_bottom = 259.208
+rect_scale = Vector2( 0.26, 0.26 )
+texture_normal = ExtResource( 8 )
+texture_pressed = ExtResource( 9 )
+
+[node name="get_file_button" type="TextureButton" parent="."]
+margin_left = 961.181
+margin_top = 142.375
+margin_right = 1167.19
+margin_bottom = 259.375
+rect_scale = Vector2( 0.26, 0.26 )
+texture_normal = ExtResource( 10 )
+texture_pressed = ExtResource( 11 )
+
+[node name="next_tick_button" type="TextureButton" parent="."]
+margin_left = 903.07
+margin_top = 559.293
+margin_right = 1322.07
+margin_bottom = 676.293
+rect_scale = Vector2( 0.26, 0.26 )
+texture_normal = ExtResource( 12 )
+texture_pressed = ExtResource( 13 )
+
+[node name="last_tick_button" type="TextureButton" parent="."]
+margin_left = 787.888
+margin_top = 558.812
+margin_right = 1210.89
+margin_bottom = 675.812
+rect_scale = Vector2( 0.26, 0.26 )
+texture_normal = ExtResource( 14 )
+texture_pressed = ExtResource( 15 )
+
+[node name="filepath_entry" type="LineEdit" parent="."]
+margin_left = 791.0
+margin_top = 112.0
+margin_right = 1007.0
+margin_bottom = 136.0
+align = 1
+placeholder_text = "<PATH_TO_TICKDATA.JSON>"
+
+[node name="loaded_data_table" type="ItemList" parent="."]
+anchor_right = 1.0
+margin_left = 793.0
+margin_top = 180.0
+margin_right = 1007.0
+margin_bottom = 483.0
+custom_fonts/font = SubResource( 5 )
+auto_height = true
+max_columns = 2
+fixed_column_width = 85
+
+[node name="FileDialog" type="FileDialog" parent="."]
+margin_left = 316.714
+margin_top = 195.571
+margin_right = 732.714
+margin_bottom = 379.571
+window_title = "Open a File"
+dialog_text = "Please select a tickdata.json file!"
+mode = 0
+access = 2
+filters = PoolStringArray( "*.json" )
+current_dir = "/Users/bryanthayes/Documents/development/python/cogtanks/cogtanks/visualizer"
+current_path = "/Users/bryanthayes/Documents/development/python/cogtanks/cogtanks/visualizer/"
+
+[node name="error_popup" type="PopupPanel" parent="."]
+margin_left = 213.595
+margin_top = 179.771
+margin_right = 851.595
+margin_bottom = 401.771
+popup_exclusive = true
+
+[node name="error_title" type="Label" parent="error_popup"]
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 634.0
+margin_bottom = 218.0
+custom_fonts/font = SubResource( 2 )
+custom_colors/font_color = Color( 1, 0, 0, 1 )
+text = "ERROR"
+align = 1
+
+[node name="ok_button" type="TextureButton" parent="error_popup/error_title"]
+margin_left = 222.249
+margin_top = 174.501
+margin_right = 902.249
+margin_bottom = 303.501
+rect_scale = Vector2( 0.26, 0.26 )
+texture_normal = ExtResource( 16 )
+texture_pressed = ExtResource( 17 )
+
+[node name="error_text_label" type="RichTextLabel" parent="error_popup/error_title"]
+margin_left = 15.2316
+margin_top = 44.3959
+margin_right = 601.232
+margin_bottom = 159.792
+custom_fonts/normal_font = SubResource( 4 )
+text = "This is an eror!"
+[connection signal="pressed" from="run_all_button" to="." method="_on_run_all_button_pressed"]
+[connection signal="pressed" from="load_button" to="." method="_on_load_button_pressed"]
+[connection signal="pressed" from="get_file_button" to="." method="_on_get_file_button_pressed"]
+[connection signal="pressed" from="next_tick_button" to="." method="_on_next_tick_button_pressed"]
+[connection signal="pressed" from="last_tick_button" to="." method="_on_last_tick_button_pressed"]
+[connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]
+[connection signal="pressed" from="error_popup/error_title/ok_button" to="." method="_on_error_ok_button_pressed"]
