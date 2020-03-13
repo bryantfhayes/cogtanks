@@ -111,7 +111,6 @@ Checking the return status of an _intent_ does not provide any information. In o
 
 # The API
 ## self.Move(dir)
-----
 Move your tank one space in the given direction (`Direction.NORTH`, `Direction.EAST`, `Direction.WEST`, `Direction.SOUTH`). If there is a conflict, and error will be returned with details.
 
 ### Cooldown
@@ -130,7 +129,6 @@ Move your tank one space in the given direction (`Direction.NORTH`, `Direction.E
     * OUT_OF_BOUNDS - You tried to move off the grid
 
 ## self.Face(dir)
-----
 Make your tank face the given direction (`Direction.NORTH`, `Direction.EAST`, `Direction.WEST`, `Direction.SOUTH`).
 
 ### Cooldown
@@ -147,7 +145,6 @@ Make your tank face the given direction (`Direction.NORTH`, `Direction.EAST`, `D
     * OK - You are now facing the chosen direction
 
 ## self.Shoot()
-----
 Make your tank shoot a bullet in the _Direction_ it is facing.
 
 ### Cooldown
@@ -168,7 +165,6 @@ N/A
     * false - You missed
 
 ## self.Detect()
-----
 Scan the map and determine where other tanks are, relative to your position.
 
 ### Cooldown
