@@ -84,12 +84,13 @@ class CTArena():
 @brief CTBattle is the cogtank battle simulation. It requires CTArean and Tank objects.
 """
 class CTBattle():
-    def __init__(self, width=12, height=9, max_ticks=1000, ticks_per_second=3):
+    def __init__(self, width=12, height=9, max_ticks=1000, ticks_per_second=-1):
         self.curtick = 0
         self.ticks_per_second = ticks_per_second
         self.running = False
         self.max_ticks = max_ticks
         self.log = { "ticks" : [], "gameinfo" : {}}
+        self.tickdata_log = "tickdata.json"
 
         # Load all tanks
         tanks = self.load_all_tanks()
@@ -99,7 +100,7 @@ class CTBattle():
 
     def writelog(self):
         """ Write output log """
-        with open("tickdata.json", "w") as fp:
+        with open(self.tickdata_log, "w") as fp:
             fp.write(json.dumps(self.log, cls=EnumEncoder))
 
     def start(self):
@@ -109,15 +110,19 @@ class CTBattle():
         # Store JSON game data
         self.gameinfo = {"starting_tank_count" : len(self.arena.entities), "starting_tanks" : list(map(str, self.arena.entities)), "ticks_per_second" : self.ticks_per_second, "max_ticks" : self.max_ticks, "width" : self.arena.width, "height" : self.arena.height}
     
-        print("Starting simulation...")
-        print(self.gameinfo)
+        print("========================================")
+        print("|             COGTANKS!                 |")
+        print("========================================")
+        for tank in self.arena.entities:
+            print(str(tank))
 
         for tank in self.arena.entities:
             tank.setup()
 
         while self.running:
             self.tick()
-            time.sleep(1 / self.ticks_per_second)
+            if self.ticks_per_second > 0:
+                time.sleep(1 / self.ticks_per_second)
         else:
             self.gameinfo["total_ticks"] = self.curtick
             self.log["gameinfo"] = self.gameinfo
@@ -194,18 +199,21 @@ class CTBattle():
         # Termination conditions
         if len(self.arena.entities) == 1:
             logging.info("{} WON!".format(str(self.arena.entities[0])))
-            print("{} WON!".format(str(self.arena.entities[0])))
+            print("\nWinner after {} ticks:".format(self.curtick))
+            print("{}".format(str(self.arena.entities[0])))
             self.running = False
             return
         elif len(self.arena.entities) == 0:
             logging.info("NOBODY WON!")
-            print("NOBODY WON!")
+            print("\nWinner after {} ticks:".format(self.curtick))
+            print("NOBODY!")
             self.running = False
             return
         elif self.curtick >= self.max_ticks:
             self.running = False
             logging.info("MAX TICK REACHED - NOBODY WON!")
-            print("MAX TICK REACHED - NOBODY WON!")
+            print("\nWinner after {} ticks:".format(self.curtick))
+            print("NOBODY!")
             return
 
         # Making it here means we will probably run another tick
@@ -285,7 +293,7 @@ class CTBattle():
 
         # Make sure new_position is within arena
         if new_position.x >= self.arena.width or new_position.y >= self.arena.height or new_position.x < 0 or new_position.y < 0:
-            return { "status" : "OUT OF BOUNDS", "type" : "move"}
+            return { "status" : "OUT_OF_BOUNDS", "type" : "move"}
 
         # Make sure no one is currently in new_position
         for e in self.arena.entities:
@@ -320,13 +328,8 @@ class CTBattle():
                 entities.append(tank._pos - e._pos)
         return { "status" : "OK", "found" : entities, "type" : "detect" }
 
-
 def main():
-    battle = CTBattle(ticks_per_second=100, max_ticks=10000)
-    battle.add_tank_by_name("simple", rename="Bot-1")
-    #battle.add_tank_by_name("simple", rename="Bot-2")
-    #battle.add_tank_by_name("simple", rename="Bot-3")
-    #battle.add_tank_by_name("simple", rename="Bot-4")
+    battle = CTBattle(max_ticks=5000)
     battle.start()
 
 if __name__ == "__main__":

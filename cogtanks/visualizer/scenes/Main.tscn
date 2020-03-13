@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=2]
+[gd_scene load_steps=23 format=2]
 
 [ext_resource path="res://Main.gd" type="Script" id=1]
 [ext_resource path="res://scenes/Grid.tscn" type="PackedScene" id=2]
@@ -17,12 +17,9 @@
 [ext_resource path="res://assets/step-back-btn-pressed.png" type="Texture" id=15]
 [ext_resource path="res://assets/ok-btn.png" type="Texture" id=16]
 [ext_resource path="res://assets/ok-btn-pressed.png" type="Texture" id=17]
+[ext_resource path="res://assets/Anonymous.ttf" type="DynamicFontData" id=18]
 
 [sub_resource type="DynamicFont" id=1]
-font_data = ExtResource( 5 )
-
-[sub_resource type="DynamicFont" id=5]
-size = 12
 font_data = ExtResource( 5 )
 
 [sub_resource type="DynamicFont" id=2]
@@ -30,9 +27,13 @@ size = 32
 outline_color = Color( 0.580392, 0.172549, 0.172549, 1 )
 font_data = ExtResource( 5 )
 
-[sub_resource type="DynamicFont" id=4]
+[sub_resource type="DynamicFont" id=3]
 extra_spacing_top = 16
 font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=4]
+size = 8
+font_data = ExtResource( 18 )
 
 [node name="Main" type="Node2D"]
 script = ExtResource( 1 )
@@ -139,17 +140,6 @@ margin_bottom = 136.0
 align = 1
 placeholder_text = "<PATH_TO_TICKDATA.JSON>"
 
-[node name="loaded_data_table" type="ItemList" parent="."]
-anchor_right = 1.0
-margin_left = 793.0
-margin_top = 180.0
-margin_right = 1007.0
-margin_bottom = 483.0
-custom_fonts/font = SubResource( 5 )
-auto_height = true
-max_columns = 2
-fixed_column_width = 85
-
 [node name="FileDialog" type="FileDialog" parent="."]
 margin_left = 316.714
 margin_top = 195.571
@@ -194,8 +184,16 @@ margin_left = 15.2316
 margin_top = 44.3959
 margin_right = 601.232
 margin_bottom = 159.792
-custom_fonts/normal_font = SubResource( 4 )
+custom_fonts/normal_font = SubResource( 3 )
 text = "This is an eror!"
+
+[node name="text_edit" type="TextEdit" parent="."]
+margin_left = 789.833
+margin_top = 185.416
+margin_right = 1010.83
+margin_bottom = 481.416
+custom_fonts/font = SubResource( 4 )
+readonly = true
 [connection signal="pressed" from="run_all_button" to="." method="_on_run_all_button_pressed"]
 [connection signal="pressed" from="load_button" to="." method="_on_load_button_pressed"]
 [connection signal="pressed" from="get_file_button" to="." method="_on_get_file_button_pressed"]

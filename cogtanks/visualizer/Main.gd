@@ -46,6 +46,9 @@ func change_playback_speed(speed):
 func display_tick(curtick):
 	$tick_label.text = str(curtick+1)
 	
+	var jstr = JSON.print(ticks[curtick], " ")
+	$text_edit.text = jstr
+	
 	for tank in tanks:
 		if tank.tankname in ticks[curtick]["tanks"]:
 			tank.run_tick(ticks[curtick]["tanks"][tank.tankname])
@@ -87,26 +90,10 @@ func runall_ticks():
 		_timer.set_one_shot(false) # Make sure it loops
 		_timer.start()
 
-func load_item_list():
+func loadgame():
 	# Load item list with game information
 	var gameinfo = gamedata["gameinfo"]
 	var starting_tanks = gameinfo["starting_tanks"]
-	
-	$loaded_data_table.clear()
-	$loaded_data_table.add_item("height", null, false)
-	$loaded_data_table.add_item(str(gameinfo["height"]), null, false)
-	$loaded_data_table.add_item("width", null, false)
-	$loaded_data_table.add_item(str(gameinfo["width"]), null, false)
-	$loaded_data_table.add_item("ticks/sec", null, false)
-	$loaded_data_table.add_item(str(gameinfo["ticks_per_second"]), null, false)
-	$loaded_data_table.add_item("max ticks", null, false)
-	$loaded_data_table.add_item(str(gameinfo["max_ticks"]), null, false)
-	
-	$loaded_data_table.add_item(" ", null, false)
-	$loaded_data_table.add_item(" ", null, false)
-	
-	$loaded_data_table.add_item("tanks:", null, false)
-	$loaded_data_table.add_item(" ", null, false)
 	
 	# Clear old children
 	tanks = []
@@ -117,12 +104,12 @@ func load_item_list():
 			child.queue_free()
 	
 	for tank in starting_tanks:
-		$loaded_data_table.add_item(str(tank.split(" - ")[0]), null, false)
-		$loaded_data_table.add_item("alive", null, false)
 		var new_tank = TANK.instance()
 		new_tank.init(tank, ticks[0]["tanks"][tank])
 		$tank_area_bg/Grid.add_child(new_tank)
 		tanks.append(new_tank)
+		
+	display_tick(_current_tick)
 
 func _on_load_button_pressed():
 	var file = File.new()
@@ -136,7 +123,7 @@ func _on_load_button_pressed():
 		if "gameinfo" in gamedata and "ticks" in gamedata:
 			print(gamedata["gameinfo"])
 			ticks = gamedata["ticks"]
-			load_item_list()
+			loadgame()
 		else:
 			$error_popup/error_title/error_text_label.text = "Make sure JSON contains gameinfo and ticks fields"
 			$error_popup.popup_centered()
