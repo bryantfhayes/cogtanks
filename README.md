@@ -64,6 +64,7 @@ class Simple(Tank):
 ## Make the Tanks Fight!
 In order to kick off a battle, and generate the `tickdata.json` file, run:
 ```bash
+> cd cogtanks/engine
 > python cogtanks.py
 ```
 
