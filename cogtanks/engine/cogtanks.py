@@ -163,7 +163,10 @@ class CTBattle():
                 tank._cooldown -= 1
             else:
                 tank._intent = None
-                tank.run()
+                try:
+                    tank.run()
+                except Exception as e:
+                    logging.warning("{0} run failed with: {1}".format(str(tank), e))
                 tank.results = {}
             
             ticklog["tanks"][str(tank)]["intent"] = tank._intent
