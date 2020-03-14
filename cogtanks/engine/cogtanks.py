@@ -360,9 +360,10 @@ def main():
             winners[winningtank] = 0.0
         winners[winningtank] += 1.0
 
+    percentages = {}
     for tank in winners:
-        print("{0} : %{1:.2f}".format(tank, winners[tank] / runs * 100.0))
-
+        percentages[tank] = "%{:.2f}".format(winners[tank] / runs * 100.0)
+    print(json.dumps(percentages))
 
 if __name__ == "__main__":
     main()
