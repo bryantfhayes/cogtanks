@@ -6,7 +6,27 @@ import random
 import time
 import logging
 import json
+import argparse
 
+# Argument handling
+parser = argparse.ArgumentParser()
+
+parser.add_argument(
+    '--runs',
+    default=1,
+    help='specify how many runs to do (default: 1)'
+)
+
+parser.add_argument(
+    "-v",
+    "--verbose",
+    help="increase output verbosity",
+    action="store_true"
+)
+
+args = parser.parse_args()
+
+# Create logger to file
 logging.basicConfig(filename='cogtanks.log', filemode='w', format='%(message)s', level=logging.DEBUG)
 
 PUBLIC_ENUMS = {
@@ -91,6 +111,7 @@ class CTBattle():
         self.max_ticks = max_ticks
         self.log = { "ticks" : [], "gameinfo" : {}}
         self.tickdata_log = "tickdata.json"
+        self.last_winner = "NOBODY"
 
         # Load all tanks
         tanks = self.load_all_tanks()
@@ -109,12 +130,6 @@ class CTBattle():
 
         # Store JSON game data
         self.gameinfo = {"starting_tank_count" : len(self.arena.entities), "starting_tanks" : list(map(str, self.arena.entities)), "ticks_per_second" : self.ticks_per_second, "max_ticks" : self.max_ticks, "width" : self.arena.width, "height" : self.arena.height}
-    
-        print("========================================")
-        print("|             COGTANKS!                 |")
-        print("========================================")
-        for tank in self.arena.entities:
-            print(str(tank))
 
         for tank in self.arena.entities:
             tank.setup()
@@ -199,21 +214,27 @@ class CTBattle():
         # Termination conditions
         if len(self.arena.entities) == 1:
             logging.info("{} WON!".format(str(self.arena.entities[0])))
-            print("\nWinner after {} ticks:".format(self.curtick))
-            print("{}".format(str(self.arena.entities[0])))
+            if args.verbose:
+                print("\nWinner after {} ticks:".format(self.curtick))
+                print("{}".format(str(self.arena.entities[0])))
             self.running = False
+            self.last_winner = str(str(self.arena.entities[0]))
             return
         elif len(self.arena.entities) == 0:
             logging.info("NOBODY WON!")
-            print("\nWinner after {} ticks:".format(self.curtick))
-            print("NOBODY!")
+            if args.verbose:
+                print("\nWinner after {} ticks:".format(self.curtick))
+                print("NOBODY!")
+            self.last_winner = "NOBODY"
             self.running = False
             return
         elif self.curtick >= self.max_ticks:
             self.running = False
             logging.info("MAX TICK REACHED - NOBODY WON!")
-            print("\nWinner after {} ticks:".format(self.curtick))
-            print("NOBODY!")
+            if args.verbose:
+                print("\nWinner after {} ticks:".format(self.curtick))
+                print("NOBODY!")
+            self.last_winner = "NOBODY"
             return
 
         # Making it here means we will probably run another tick
@@ -329,8 +350,19 @@ class CTBattle():
         return { "status" : "OK", "found" : entities, "type" : "detect" }
 
 def main():
-    battle = CTBattle(max_ticks=5000)
-    battle.start()
+    winners = {}
+    runs = int(args.runs)
+    for _ in range(runs):
+        battle = CTBattle(max_ticks=5000)
+        battle.start()
+        winningtank = battle.last_winner.split(" - ")[0]
+        if winningtank not in winners:
+            winners[winningtank] = 0.0
+        winners[winningtank] += 1.0
+
+    for tank in winners:
+        print("{0} : %{1:.2f}".format(tank, winners[tank] / runs * 100.0))
+
 
 if __name__ == "__main__":
     main()

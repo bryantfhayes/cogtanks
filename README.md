@@ -60,12 +60,22 @@ class Simple(Tank):
 * Never use variables or functions starting with an underscore. These are private and that is cheating!
 * Don't manipulate parent `Tank` class in any way.
 * Don't try to take advantage of the underlying cogtank engine, just write a self contained `run()` function.
+* Please do not use `time.sleep()` or anything else that takes a long time to execute
 
 ## Make the Tanks Fight!
 In order to kick off a battle, and generate the `tickdata.json` file, run:
 ```bash
 > cd cogtanks/engine
 > python cogtanks.py
+```
+
+### Gets Multi-run Stats
+To better understand how well your tank is doing, run many simulations back-to-back! The following will run 10 simulations and return the win percentage of each tank!
+```bash
+> python cogtanks.py --runs 1000
+BFHMarkI : %63.60
+NOBODY : %11.90
+SimpleTank : %24.50
 ```
 
 This is make one tank for each AI found in `cogtanks/engine/tanks` and make them fight eachother either until one is left, or the tick limit is hit (Default: 5000 ticks)
