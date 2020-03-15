@@ -1,15 +1,29 @@
-import os, copy, uuid, json
+import os, copy, uuid, json, threading, sys, signal, queue, shutil
 from subprocess import Popen, PIPE, STDOUT
 from flask import Flask, request, redirect, url_for, render_template, Response, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
+from flask_sqlalchemy import SQLAlchemy
+from tinydb import TinyDB, Query
 
 app = Flask(__name__)
+db = TinyDB('db.json')
+q = queue.Queue()
+db_writer = None
 
-TANK_DIR = "../engine/tanks"
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+TANK_DIR = "uploads"
 
 #
 # Helpers
 #
+
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    if db_writer is not None:
+        db_writer.running = False
+        db_writer.join()
+    sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
 
 def HTTP_SUCCESS(msg):
     return jsonify(
@@ -29,30 +43,25 @@ def HTTP_ERROR(msg, code="GENERIC_ERROR"):
 #
 # Classes
 #
-class TankEntry():
-    def __init__(self, id=None):
-        self.id = id
-        
-        if self.id is None:
-            self.id = uuid.uuid4()
-            self.new_entry()
+class DBWriter(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.running = True
 
-        self.load_tank()
-
-    def load_tank(self):
-        """ Load tank data from database """
-        pass
-
-    def new_entry(self):
-        """ Make a new entry in database """
-        pass
-
+    def run(self):
+        while self.running:
+            try:
+                entry = q.get(timeout=1)
+            except queue.Empty:
+                pass
+            else:
+                db.insert(entry)
 
 #
 # End Point Implementations
 #
 
-def _upload_tank(request):
+def _upload_tank(request, id=None):
     """
     @brief Upload new tank
     """
@@ -68,12 +77,18 @@ def _upload_tank(request):
     if file:
         filename = secure_filename(file.filename)
         if filename.startswith("tank_") and filename.endswith(".py"):
-            #file.save(os.path.join(TANK_DIR, filename))
+            name = filename[5:-3].capitalize()
+            path = os.path.join(TANK_DIR, filename)
+            if id is None:
+                id = str(uuid.uuid4())
+
+            # If a file at this path already exists, fail
+            if len(db.search(Query().path == path)):
+                return HTTP_ERROR("that tank already exisits, try PUT instead")
             
-            #cmd = 'python cogtanks.py --runs 10'
-            #p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True, cwd="../engine")
-            #data = p.stdout.read()
-            tank = {"id" : "12345"}
+            file.save(path)
+            tank = {"id" : id, "author" : author, "path" : path, "name" : name}
+            q.put(tank)
             return jsonify(tank)
         else:
             return HTTP_ERROR("bad file type")
@@ -84,22 +99,29 @@ def _get_tank(tank_id, request):
     """
     @brief Get message for a specific tank by id
     """
-    tank = {}
-    return jsonify(tank), 200
+    Tank = Query()
+    result = db.search(Tank.id == tank_id)
+    if len(result) > 0:
+        return jsonify(result[0]), 200
+    return HTTP_ERROR("tank not found")
 
 def _get_all_tanks(request):
     """
     @brief Return a list of all tanks
     """
-    tanks = []
-    return jsonify(tanks), 200
+    return jsonify(db.all()), 200
 
 def _delete_tank(tank_id, request):
     """
     @brief Delete tank
     """
-    tank = {}
-    return jsonify(tank), 200
+    Tank = Query()
+    result = db.search(Tank.id == tank_id)
+    if len(result) > 0:
+        db.remove(Tank.id == tank_id)
+        return jsonify(result[0]), 200
+    else:
+        return HTTP_ERROR("no tank with that id")
 
 def _battle(request):
     """
@@ -114,11 +136,52 @@ def _battle(request):
     if 'tanks' not in request.form or request.form['tanks'] == "":
         return HTTP_ERROR("missing tank list", "BAD_PARAM")
 
-    cmd = 'python cogtanks.py --runs 10'
+    # Make a staging directory for battling tanks
+    tmpdir = "/tmp/{}".format(uuid.uuid4())
+    os.makedirs(tmpdir)
+
+    runs = request.form["runs"]
+    tanks = request.form["tanks"].strip('][').split(', ') 
+
+    # For each indicated Tank, copy file to tmpdir
+    Tank = Query()
+    for tank_id in tanks:
+        results = db.search(Tank.id == tank_id)
+        if len(results) <= 0:
+            # Tank not found!
+            return HTTP_ERROR("no tank with id: {}".format(tank_id))
+        else:
+            shutil.copy(results[0]["path"], tmpdir)
+
+    # Run simulation
+    cmd = 'python cogtanks.py --runs {0} --tank_dir {1}'.format(runs, tmpdir)
     p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True, cwd="../engine")
     output = p.stdout.read()
 
-    return jsonify(json.loads(output)), 200
+    tickdata_path = os.path.join(tmpdir, "tickdata.json")
+    if os.path.exists(tickdata_path) == False:
+        return HTTP_ERROR("no tick data found")
+
+    with open(tickdata_path) as fp:
+        tickdata = json.load(fp)
+
+    # Remove temporary working directory
+    shutil.rmtree(tmpdir)
+
+    # Add stats to normal game data
+    tickdata["stats"] = json.loads(output)
+
+    return jsonify(tickdata), 200
+
+def _put_tank(tank_id, request):
+    """
+    @brief Update an existing tank
+    """
+    if len(db.search(Query().id == tank_id)) <= 0:
+        return HTTP_ERROR("tank not found")
+    else:
+        _delete_tank(tank_id, request)
+        return _upload_tank(request, tank_id)
 
 #
 # Endpoints
@@ -132,7 +195,11 @@ def delete_tank(tank_id):
 def get_tank(tank_id):
     return _get_tank(tank_id, request)
 
-@app.route('/api/upload/tank', methods=['POST'])
+@app.route('/api/tank/<tank_id>', methods=['PUT'])
+def put_tank(tank_id):
+    return _put_tank(tank_id, request)
+
+@app.route('/api/tank', methods=['POST'])
 def upload_tank():
     return _upload_tank(request)
 
@@ -150,4 +217,7 @@ def catch_all(path):
     return HTTP_ERROR("invalid endpoint")
 
 if __name__ == "__main__":
+    db_writer = DBWriter()
+    db_writer.setName('DBWriter Thread')
+    db_writer.start()
     app.run(host="0.0.0.0")

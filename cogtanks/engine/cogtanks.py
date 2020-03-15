@@ -18,6 +18,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--tank_dir',
+    default="tanks",
+    type=str,
+    help='directory containing tanks (default: tanks/)'
+)
+
+parser.add_argument(
     "-v",
     "--verbose",
     help="increase output verbosity",
@@ -104,14 +111,15 @@ class CTArena():
 @brief CTBattle is the cogtank battle simulation. It requires CTArean and Tank objects.
 """
 class CTBattle():
-    def __init__(self, width=12, height=9, max_ticks=1000, ticks_per_second=-1):
+    def __init__(self, tank_dir, width=12, height=9, max_ticks=1000, ticks_per_second=-1):
         self.curtick = 0
         self.ticks_per_second = ticks_per_second
         self.running = False
         self.max_ticks = max_ticks
         self.log = { "ticks" : [], "gameinfo" : {}}
-        self.tickdata_log = "tickdata.json"
+        self.tickdata_log = os.path.join(tank_dir, "tickdata.json")
         self.last_winner = "NOBODY"
+        self.current_tank_dir=tank_dir
 
         # Load all tanks
         tanks = self.load_all_tanks()
@@ -246,7 +254,7 @@ class CTBattle():
     def load_all_tanks(self):
         """ Load all tanks from: tanks/tank_*.py """
         tanks = []
-        for filename in os.listdir("tanks"):
+        for filename in os.listdir(self.current_tank_dir):
             # For each tank_*.py in tanks/ directory, load module and create a new tank object.
             if filename.endswith(".py") and filename.startswith("tank_"):
                 name = filename.strip(".py").strip("tank_")
@@ -258,7 +266,7 @@ class CTBattle():
 
     def add_tank_by_name(self, name, rename=None):
         """ Add a specified tank by name """
-        for filename in os.listdir("tanks"):
+        for filename in os.listdir(self.current_tank_dir):
             # For each tank_*.py in tanks/ directory, load module and create a new tank object.
             if filename.endswith(".py") and filename.startswith("tank_"):
                 if name == filename.strip(".py").strip("tank_"):
@@ -356,7 +364,7 @@ def main():
     winners = {}
     runs = int(args.runs)
     for _ in range(runs):
-        battle = CTBattle(max_ticks=5000)
+        battle = CTBattle(tank_dir=args.tank_dir, max_ticks=5000)
         battle.start()
         winningtank = battle.last_winner.split(" - ")[0]
         if winningtank not in winners:
