@@ -57,6 +57,10 @@ class DBWriter(threading.Thread):
             else:
                 db.insert(entry)
 
+db_writer = DBWriter()
+db_writer.setName('DBWriter Thread')
+db_writer.start()
+
 #
 # End Point Implementations
 #
@@ -218,7 +222,4 @@ def catch_all(path):
     return HTTP_ERROR("invalid endpoint")
 
 if __name__ == "__main__":
-    db_writer = DBWriter()
-    db_writer.setName('DBWriter Thread')
-    db_writer.start()
     app.run(host="0.0.0.0")
