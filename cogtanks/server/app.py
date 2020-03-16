@@ -65,6 +65,7 @@ def _upload_tank(request, id=None):
     """
     @brief Upload new tank
     """
+    print(request.get_data().decode("utf-8"))
     if 'file' not in request.files or request.files['file'].filename == "":
         return HTTP_ERROR("missing file")
 
