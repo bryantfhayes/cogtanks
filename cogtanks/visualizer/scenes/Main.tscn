@@ -157,8 +157,8 @@ dialog_text = "Please select a tickdata.json file!"
 mode = 0
 access = 2
 filters = PoolStringArray( "*.json" )
-current_dir = "/Users/bryanthayes/Documents/development/python/cogtanks/cogtanks/visualizer"
-current_path = "/Users/bryanthayes/Documents/development/python/cogtanks/cogtanks/visualizer/"
+current_dir = "C:/Users/bhayes/Downloads/cogtanks/cogtanks/visualizer"
+current_path = "C:/Users/bhayes/Downloads/cogtanks/cogtanks/visualizer/"
 
 [node name="error_popup" type="PopupPanel" parent="."]
 margin_left = 213.595
@@ -218,10 +218,10 @@ margin_right = 902.762
 margin_bottom = 470.504
 
 [node name="ColorRect" type="ColorRect" parent="new_battle_popup"]
-margin_left = 5.05829
-margin_top = 7.70416
-margin_right = 738.058
-margin_bottom = 367.704
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 737.0
+margin_bottom = 364.0
 rect_pivot_offset = Vector2( 364.517, 248.779 )
 color = Color( 0.337255, 0.337255, 0.337255, 1 )
 
@@ -304,8 +304,8 @@ margin_bottom = 184.0
 window_title = "Open a File"
 mode = 0
 access = 2
-current_dir = "/Users/bryanthayes/github/cogtanks/cogtanks/visualizer"
-current_path = "/Users/bryanthayes/github/cogtanks/cogtanks/visualizer/"
+current_dir = "C:/Users/bhayes/Downloads/cogtanks/cogtanks/visualizer"
+current_path = "C:/Users/bhayes/Downloads/cogtanks/cogtanks/visualizer/"
 
 [node name="http_get_tanks" type="HTTPRequest" parent="new_battle_popup"]
 

@@ -161,7 +161,7 @@ func _on_error_ok_button_pressed():
 func _on_new_battle_button_pressed():
 	var query = JSON.print({})
 	var headers = []
-	$new_battle_popup/http_get_tanks.request("http://127.0.0.1:5000/api/tanks", headers, true, HTTPClient.METHOD_GET, query)
+	$new_battle_popup/http_get_tanks.request("http://slagathor.ddns.net:5000/api/tanks", headers, true, HTTPClient.METHOD_GET, query)
 	$new_battle_popup.popup_centered()
 	print("Sent request")
 
@@ -206,7 +206,7 @@ func _on_upload_file_dialog_file_selected(path):
 	var boundary_end = "\r\n----GodotFileUploadBoundaryZ29kb3RmaWxl--\r\n".to_ascii()
 	headers.append("Content-Type: multipart/form-data; boundary=--GodotFileUploadBoundaryZ29kb3RmaWxl")
 	var data = (boundary_start + disposition + content + boundary_start + disposition2 + content2 + boundary_end)
-	var result = $new_battle_popup/http_upload.request("http://127.0.0.1:5000/api/tank", headers, true, HTTPClient.METHOD_POST, data.get_string_from_utf8())
+	var result = $new_battle_popup/http_upload.request("http://slagathor.ddns.net:5000/api/tank", headers, true, HTTPClient.METHOD_POST, data.get_string_from_utf8())
 	
 func _on_http_get_tanks_request_completed(result, response_code, headers, body):
 	var json = JSON.parse(body.get_string_from_utf8())
@@ -232,7 +232,7 @@ func _on_battle_run_button_pressed():
 	var boundary_end = "\r\n----GodotFileUploadBoundaryZ29kb3RmaWxl--\r\n".to_ascii()
 	headers.append("Content-Type: multipart/form-data; boundary=--GodotFileUploadBoundaryZ29kb3RmaWxl")
 	var data = (boundary_start + disposition + content + boundary_start + disposition2 + content2 + boundary_end)
-	var result = $new_battle_popup/http_run.request("http://127.0.0.1:5000/api/battle", headers, true, HTTPClient.METHOD_POST, data.get_string_from_utf8())
+	var result = $new_battle_popup/http_run.request("http://slagathor.ddns.net:5000/api/battle", headers, true, HTTPClient.METHOD_POST, data.get_string_from_utf8())
 	$overlay.visible = true
 	$new_battle_popup.hide()
 	
@@ -254,4 +254,4 @@ func _on_http_run_request_completed(result, response_code, headers, body):
 func _on_http_upload_request_completed(result, response_code, headers, body):
 	var query = JSON.print({})
 	var _headers = []
-	$new_battle_popup/http_get_tanks.request("http://127.0.0.1:5000/api/tanks", _headers, true, HTTPClient.METHOD_GET, query)
+	$new_battle_popup/http_get_tanks.request("http://slagathor.ddns.net:5000/api/tanks", _headers, true, HTTPClient.METHOD_GET, query)
