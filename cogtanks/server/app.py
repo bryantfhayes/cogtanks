@@ -3,7 +3,7 @@ from subprocess import Popen, PIPE, STDOUT
 from flask import Flask, request, redirect, url_for, render_template, Response, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
-from tinydb import TinyDB, Query
+from tinydb import TinyDB, Query, where
 
 app = Flask(__name__)
 db = TinyDB('db.json')
@@ -69,7 +69,6 @@ def _upload_tank(request, id=None):
     """
     @brief Upload new tank
     """
-    print(request.get_data().decode("utf-8"))
     if 'file' not in request.files or request.files['file'].filename == "":
         return HTTP_ERROR("missing file")
 
@@ -88,8 +87,9 @@ def _upload_tank(request, id=None):
                 id = str(uuid.uuid4())
 
             # If a file at this path already exists, fail
-            if len(db.search(Query().path == path)):
-                return HTTP_ERROR("that tank already exisits, try PUT instead")
+            found = db.search(where('path') == path)
+            if len(found):
+                return jsonify({"code" : "Tank already exists", "id" : found[0]["id"]}), 400
             
             file.save(path)
             tank = {"id" : id, "author" : author, "path" : path, "name" : name}
