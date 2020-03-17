@@ -14,6 +14,8 @@ var tanks = []
 var available_tanks = {}
 var selected_tanks = {}
 
+var last_upload_path = ""
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	set_process(true)
@@ -191,22 +193,34 @@ func load_file(path):
     file.close()
     return content
 
-func _on_upload_file_dialog_file_selected(path):
+func upload_tank(path, id):
+	var file_name = path
 	if "/" in path:
-		path = path.split("/")[-1]
+		file_name = path.split("/")[-1]
 		
 	var headers = []
+	var url = "http://slagathor.ddns.net:5000/api/tank"
+	var httptype = HTTPClient.METHOD_POST
+	if id != null:
+		url = "http://slagathor.ddns.net:5000/api/tank/%s" % id
+		httptype = HTTPClient.METHOD_PUT
+		print(url)
+	
 	var content = load_file(path).to_ascii()
 	var disposition_author_raw = "\r\nContent-Disposition: form-data; name=\"author\"\r\n\r\n"
 	var content2 = "Godot".to_ascii()
-	var disposition_file_raw = "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\nContent-Type: application/octet-stream\r\n\r\n" % path
+	var disposition_file_raw = "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\nContent-Type: application/octet-stream\r\n\r\n" % file_name
 	var boundary_start = "\r\n----GodotFileUploadBoundaryZ29kb3RmaWxl".to_ascii()
 	var disposition = disposition_file_raw.to_ascii()
 	var disposition2 = disposition_author_raw.to_ascii()
 	var boundary_end = "\r\n----GodotFileUploadBoundaryZ29kb3RmaWxl--\r\n".to_ascii()
 	headers.append("Content-Type: multipart/form-data; boundary=--GodotFileUploadBoundaryZ29kb3RmaWxl")
 	var data = (boundary_start + disposition + content + boundary_start + disposition2 + content2 + boundary_end)
-	var result = $new_battle_popup/http_upload.request("http://slagathor.ddns.net:5000/api/tank", headers, true, HTTPClient.METHOD_POST, data.get_string_from_utf8())
+	var result = $new_battle_popup/http_upload.request(url, headers, true, httptype, data.get_string_from_utf8())
+	
+func _on_upload_file_dialog_file_selected(path):
+	self.last_upload_path = path
+	upload_tank(self.last_upload_path, null)
 	
 func _on_http_get_tanks_request_completed(result, response_code, headers, body):
 	var json = JSON.parse(body.get_string_from_utf8())
@@ -254,4 +268,14 @@ func _on_http_run_request_completed(result, response_code, headers, body):
 func _on_http_upload_request_completed(result, response_code, headers, body):
 	var query = JSON.print({})
 	var _headers = []
-	$new_battle_popup/http_get_tanks.request("http://slagathor.ddns.net:5000/api/tanks", _headers, true, HTTPClient.METHOD_GET, query)
+	var json = JSON.parse(body.get_string_from_utf8())
+	print(response_code)
+	if response_code != 400:
+		$new_battle_popup/http_get_tanks.request("http://slagathor.ddns.net:5000/api/tanks", _headers, true, HTTPClient.METHOD_GET, query)
+	else:
+		if "id" in json.result:
+			print(json.result)
+			upload_tank(self.last_upload_path, json.result["id"])
+		else:
+			print(json.result)
+			print("ERROR")
