@@ -342,7 +342,7 @@ class CTBattle():
         
         # If there were any collisions, then don't move
         if collisions > 0:
-            return { "status" : "COLLISION", "type" : "" }
+            return { "status" : "COLLISION", "type" : "move" }
         else:
             tank._pos = new_position
             return { "status" : "OK", "type" : "move" }
